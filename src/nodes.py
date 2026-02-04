@@ -2,12 +2,15 @@ import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.state import AgentState
-from src.tools import search_web  # We will build this next
+from src.tools import search_web  
+from dotenv import load_dotenv
+# --- LOAD ENVIRONMENT VARIABLES FIRST ---
+load_dotenv()
 
 # 1. Setup the Model (Gemini)
 # We use a low temperature for more factual, less creative responses.
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash", 
+    model="gemini-2.5-flash", 
     temperature=0,
     google_api_key=os.getenv("GOOGLE_API_KEY")
 )

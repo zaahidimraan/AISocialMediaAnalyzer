@@ -1,5 +1,8 @@
 import os
 from langchain_community.tools.tavily_search import TavilySearchResults
+from dotenv import load_dotenv
+# --- LOAD ENVIRONMENT VARIABLES FIRST ---
+load_dotenv()
 
 def search_web(query: str) -> str:
     """
