@@ -6,7 +6,7 @@ from src.logger import get_logger, log_execution_time
 logger = get_logger("src.tools")
 
 @log_execution_time(logger)
-def search_web(query: str, visited_urls: list, state: AgentState):
+def search_web(query: str, visited_urls: list, max_search_results: int=5):
     """
     Searches using Tavily. Allows same domain but blocks exact visited URLs.
     """
@@ -19,7 +19,7 @@ def search_web(query: str, visited_urls: list, state: AgentState):
     # 1. Initialize tool WITHOUT exclude_domains
     # We want to see results from 'wikipedia.org' even if we've been there before,
     # just not the *same page*.
-    tool = TavilySearchResults(state["max_search_results"])
+    tool = TavilySearchResults(max_results=max_search_results)
 
     try:
         results = tool.invoke({"query": query})

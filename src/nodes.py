@@ -48,7 +48,7 @@ def conduct_research(state: AgentState):
     
     logger.info(f"--- Researching: {query} ---")
     
-    search_result = search_web(query, existing_domains)
+    search_result = search_web(query, existing_domains,state["max_search_results"])
     
     return {
         "latest_content": search_result["content"],
