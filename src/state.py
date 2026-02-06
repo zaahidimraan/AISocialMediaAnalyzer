@@ -7,4 +7,4 @@ class AgentState(TypedDict):
     iteration: int                        # Counter to prevent infinite loops
     findings: Annotated[List[str], operator.add]  # Accumulates facts found over time
     visited_urls: Annotated[List[str], operator.add] # Tracks sources to avoid duplicates
-    visited_domains: Annotated[List[str], operator.add]
+    visited_domains: Annotated[List[str], operator.add] # Stored the visit domain

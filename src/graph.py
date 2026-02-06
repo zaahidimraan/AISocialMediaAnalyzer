@@ -1,34 +1,30 @@
 from langgraph.graph import StateGraph, END
 from src.state import AgentState
 from src.nodes import generate_strategy, conduct_research, analyze_findings
+from src.logger import get_logger
 
-# Configuration
+logger = get_logger("src.graph")
+
 MAX_ITERATIONS = 3
 
 def should_continue(state: AgentState):
-    """
-    Determines if the agent should continue searching or stop.
-    """
     if state['iteration'] < MAX_ITERATIONS:
+        logger.info(f"Deciding: Continue (Iteration {state['iteration']}/{MAX_ITERATIONS})")
         return "continue"
+    logger.info("Deciding: Stop (Max iterations reached)")
     return "end"
 
-# 1. Initialize the Graph
+logger.info("Building State Graph...")
 workflow = StateGraph(AgentState)
 
-# 2. Add Nodes
 workflow.add_node("strategist", generate_strategy)
 workflow.add_node("researcher", conduct_research)
 workflow.add_node("analyst", analyze_findings)
 
-# 3. Define Edges (The Flow)
-# Start -> Strategist -> Researcher -> Analyst
 workflow.set_entry_point("strategist")
 workflow.add_edge("strategist", "researcher")
 workflow.add_edge("researcher", "analyst")
 
-# 4. Conditional Loop
-# After the Analyst finishes, we check if we should loop back or stop
 workflow.add_conditional_edges(
     "analyst",
     should_continue,
@@ -38,5 +34,5 @@ workflow.add_conditional_edges(
     }
 )
 
-# 5. Compile the Graph
 app = workflow.compile()
+logger.info("Graph compiled successfully.")
