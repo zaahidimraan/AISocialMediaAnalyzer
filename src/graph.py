@@ -5,10 +5,9 @@ from src.logger import get_logger
 
 logger = get_logger("src.graph")
 
-MAX_ITERATIONS = 3
 
 def should_continue(state: AgentState):
-    if state['iteration'] < MAX_ITERATIONS:
+    if state['iteration'] < state['max_iterations']:
         logger.info(f"Deciding: Continue (Iteration {state['iteration']}/{MAX_ITERATIONS})")
         return "continue"
     logger.info("Deciding: Stop (Max iterations reached)")

@@ -24,7 +24,9 @@ def index():
                 "iteration": 0,
                 "findings": [],
                 "visited_urls": [],
-                "latest_content": ""
+                "latest_content": "",
+                "max_iterations": 3,      # Default: 3 loops
+                "max_search_results": 5   # Default: 5 loops 
             }
             
             # 2. Run the Agent (Synchronously)

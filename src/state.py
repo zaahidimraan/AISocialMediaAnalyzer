@@ -8,4 +8,6 @@ class AgentState(TypedDict):
     findings: Annotated[List[str], operator.add]  # Accumulates facts found over time
     visited_urls: Annotated[List[str], operator.add] # Tracks sources to avoid duplicates
     visited_domains: Annotated[List[str], operator.add] # Stored the visit domain
-    latest_content: str
+    latest_content: str # Stored the latest search results
+    max_iterations: int      # Controls how many loops the agent runs
+    max_search_results: int  # Controls how many links Tavily fetches
