@@ -22,16 +22,36 @@ def generate_strategy(state: AgentState):
     
     findings_text = "\n".join(state.get('findings', []))
     
-    prompt = f"""
-    You are a Deep Research AI Agent. Target: {state['original_query']}
-    Current Findings: {findings_text}
-    Based on the above, what is the SINGLE most important search query next?
-    Return ONLY the search query.
-    """
+    # prompt = f"""
+    # You are a Deep Research AI Agent. Target: {state['original_query']}
+    # Current Findings: {findings_text}
+    # Based on the above, what is the SINGLE most important search query next?
+    # Return ONLY the search query.
+    # """
+    prompt = f"""You are an expert intelligence analyst conducting deep research on: {state['original_query']}
+
+                Search iteration: {str(state['iteration'])}/{str(state['max_iterations'])}
+
+                Current Findings: {findings_text}
+
+                Analyze the current findings and determine the SINGLE most strategic next search query that will:
+                1. Fill critical information gaps
+                2. Verify suspicious or inconsistent information
+                3. Uncover hidden connections or risks
+                4. Build upon previous discoveries
+                5. Use specific names, companies, dates, or identifiers when available
+                6. Combine multiple angles (e.g., "John Doe CFO Acme Corp 2015-2020")
+                7. Focus on verifiable, public information sources
+                8. Avoid redundant searches already covered
+                9. Prioritize high-value, non-obvious connections
+
+                Return ONLY the search query as a single line of text. No explanation, no preamble.
+                """
     
     try:
         # response = llm.invoke([HumanMessage(content=prompt)])
         response = AIMessage(content="Testing")
+        print(response.content)
         logger.debug(f"Strategy Generated: {response.content}")
         return {
             "current_query": response.content.strip(), 
@@ -63,24 +83,58 @@ def analyze_findings(state: AgentState):
     if not raw_content:
         return {"findings": [], "is_complete": False}
 
-    # We update the prompt to ask for a status check
+    # prompt = f"""
+    # You are a Research Analyst.
+    # Target: {state['original_query']}
+    
+    # Existing Findings:
+    # {state.get('findings', [])}
+    
+    # New Content to Analyze:
+    # {raw_content}
+    
+    # 1. Extract new key high-value facts, risks, or connections from the "New Content".
+    # 2. Assess if we have enough information to write a comprehensive biography/report.
+    
+    # Format your response exactly like this:
+    # Findings: <your extracted facts here>
+    # Status: <COMPLETE or INCOMPLETE>
+    # """
+    
     prompt = f"""
-    You are a Research Analyst.
-    Target: {state['original_query']}
-    
-    Existing Findings:
-    {state.get('findings', [])}
-    
-    New Content to Analyze:
-    {raw_content}
-    
-    1. Extract new key high-value facts, risks, or connections from the "New Content".
-    2. Assess if we have enough information to write a comprehensive biography/report.
-    
-    Format your response exactly like this:
-    Findings: <your extracted facts here>
-    Status: <COMPLETE or INCOMPLETE>
-    """
+        You are a Senior Intelligence Analyst performing a Due Diligence investigation.
+        
+        TARGET: {state['original_query']}
+        
+        CONTEXT
+        1. ALREADY KNOWN (Do not repeat these):
+        {state.get('findings', [])}
+        
+        2. NEW SOURCE DATA (Analyze this for *new* info):
+        {raw_content}
+        
+        INSTRUCTIONS
+        
+        TASK A: EXTRACT NEW INTELLIGENCE
+        Scan the "NEW SOURCE DATA" for high-value facts that are NOT in "ALREADY KNOWN".
+        - Focus on: Verifiable Identity, Career History, Financial Assets, Legal Issues, and adverse media.
+        - CRITICAL: If the text is irrelevant (ads, cookies, navigation), output "No new relevant information found."
+        - CRITICAL: Do not summarize the article. Extract specific atomic facts (e.g., "Subject is Board Member of X Corp").
+        
+        TASK B: EVALUATE COMPLETENESS
+        Determine if we have enough to build a comprehensive profile.
+        
+        Mark status as COMPLETE ONLY if we meet ALL criteria below:
+        1. Identity Verified (Full Name + Age/DOB or Nationality).
+        2. Primary Income Source Identified (Current Job or Business).
+        3. Risk Check Performed (We have actively looked for and noted any legal issues or controversies).
+        
+        If ANY of these are missing or vague, mark **INCOMPLETE**.
+        
+        REQUIRED OUTPUT FORMAT
+        Findings: <Bulleted list of NEW facts>
+        Status: <COMPLETE or INCOMPLETE>
+        """
     
     try:
         response = llm.invoke([HumanMessage(content=prompt)])
@@ -97,7 +151,7 @@ def analyze_findings(state: AgentState):
         
         return {
             "findings": [clean_findings], 
-            "is_complete": is_complete 
+            "is_complete": is_complete # <--- This updates the state
         }
         
     except Exception as e:
