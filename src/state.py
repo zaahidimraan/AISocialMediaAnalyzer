@@ -12,3 +12,4 @@ class AgentState(TypedDict):
     max_iterations: int      # Controls how many loops the agent runs
     max_search_results: int  # Controls how many links Tavily fetches
     is_complete: bool  # True = Stop searching, False = Keep going
+    raw_extraction: str # Temporary field for Node A
