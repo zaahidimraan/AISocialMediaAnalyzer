@@ -1,40 +1,46 @@
 import os
-from langchain_tavily import TavilySearch
+from urllib.parse import urlparse
+from langchain_community.tools.tavily_search import TavilySearchResults
 
-def search_web(query: str, visited_urls: list) -> dict:
+def search_web(query: str, visited_domains: list) -> dict:
     """
-    Searches the web, filters out previously visited URLs, and returns
-    both the content string and the list of new URLs found.
+    Searches the web using Tavily, excluding previously visited domains.
+    Returns content and a list of NEW domains found.
     """
-    # 1. Check for API Key
     if not os.getenv("TAVILY_API_KEY"):
         raise ValueError("TAVILY_API_KEY is missing from .env file")
 
-    # 2. Initialize the tool
-    tool = TavilySearch(max_results=5)
+    # 1. Initialize tool
+    tool = TavilySearchResults(max_results=5)
 
     try:
-        # 3. Execute Search
-        results = tool.invoke({"query": query})
+        # 2. Execute Search with exclude_domains
+        # We can pass the list directly since it's already clean domains
+        results = tool.invoke({
+            "query": query, 
+            "exclude_domains": visited_domains
+        })
         
         formatted_output = ""
-        new_urls = []
+        new_domains = []
         
-        # 4. Filter and Format
+        # 3. Process Results
         for item in results:
             url = item['url']
+            content = item['content']
             
-            # CRITICAL CHECK: Only process if we haven't seen this URL before
-            if url not in visited_urls:
-                formatted_output += f"Source: {url}\nContent: {item['content']}\n\n"
-                new_urls.append(url)
-            else:
-                print(f"Skipping known source: {url}")
+            # Extract domain (e.g., "https://www.bbc.com/..." -> "bbc.com")
+            parsed_domain = urlparse(url).netloc.replace("www.", "")
+            
+            # Double-check: ensure we don't add the same domain twice in this single batch
+            if parsed_domain not in visited_domains and parsed_domain not in new_domains:
+                formatted_output += f"Source: {parsed_domain}\nContent: {content}\n\n"
+                new_domains.append(parsed_domain)
             
         return {
             "content": formatted_output,
-            "new_urls": new_urls
+            "new_domains": new_domains
         }
 
     except Exception as e:
-        return {"content": f"Error performing search: {str(e)}", "new_urls": []}
+        return {"content": f"Error performing search: {str(e)}", "new_domains": []}
