@@ -1,33 +1,40 @@
 import os
-from langchain_community.tools.tavily_search import TavilySearchResults
-from dotenv import load_dotenv
-# --- LOAD ENVIRONMENT VARIABLES FIRST ---
-load_dotenv()
+from langchain_tavily import TavilySearch
 
-def search_web(query: str) -> str:
+def search_web(query: str, visited_urls: list) -> dict:
     """
-    Searches the web using Tavily API and returns the results as a string.
+    Searches the web, filters out previously visited URLs, and returns
+    both the content string and the list of new URLs found.
     """
     # 1. Check for API Key
     if not os.getenv("TAVILY_API_KEY"):
         raise ValueError("TAVILY_API_KEY is missing from .env file")
 
     # 2. Initialize the tool
-    # max_results=5 gives us a good breadth of information for "Deep Research"
-    tool = TavilySearchResults(max_results=5)
+    tool = TavilySearch(max_results=5)
 
-    # 3. Execute Search
-    # The tool returns a list of dictionaries: [{'url': '...', 'content': '...'}]
     try:
+        # 3. Execute Search
         results = tool.invoke({"query": query})
         
-        # 4. Format the output
-        # We join the results into a string so the Analyst node can read it naturally.
         formatted_output = ""
+        new_urls = []
+        
+        # 4. Filter and Format
         for item in results:
-            formatted_output += f"Source: {item['url']}\nContent: {item['content']}\n\n"
+            url = item['url']
             
-        return formatted_output
+            # CRITICAL CHECK: Only process if we haven't seen this URL before
+            if url not in visited_urls:
+                formatted_output += f"Source: {url}\nContent: {item['content']}\n\n"
+                new_urls.append(url)
+            else:
+                print(f"Skipping known source: {url}")
+            
+        return {
+            "content": formatted_output,
+            "new_urls": new_urls
+        }
 
     except Exception as e:
-        return f"Error performing search: {str(e)}"
+        return {"content": f"Error performing search: {str(e)}", "new_urls": []}
