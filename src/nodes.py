@@ -22,12 +22,6 @@ def generate_strategy(state: AgentState):
     
     findings_text = "\n".join(state.get('findings', []))
     
-    # prompt = f"""
-    # You are a Deep Research AI Agent. Target: {state['original_query']}
-    # Current Findings: {findings_text}
-    # Based on the above, what is the SINGLE most important search query next?
-    # Return ONLY the search query.
-    # """
     prompt = f"""You are an expert intelligence analyst conducting deep research on: {state['original_query']}
 
                 Search iteration: {str(state['iteration'])}/{str(state['max_iterations'])}
@@ -49,8 +43,8 @@ def generate_strategy(state: AgentState):
                 """
     
     try:
-        # response = llm.invoke([HumanMessage(content=prompt)])
-        response = AIMessage(content="Testing")
+        response = llm.invoke([HumanMessage(content=prompt)])
+        # response = AIMessage(content="Testing")
         print(response.content)
         logger.debug(f"Strategy Generated: {response.content}")
         return {
@@ -82,24 +76,6 @@ def analyze_findings(state: AgentState):
     
     if not raw_content:
         return {"findings": [], "is_complete": False}
-
-    # prompt = f"""
-    # You are a Research Analyst.
-    # Target: {state['original_query']}
-    
-    # Existing Findings:
-    # {state.get('findings', [])}
-    
-    # New Content to Analyze:
-    # {raw_content}
-    
-    # 1. Extract new key high-value facts, risks, or connections from the "New Content".
-    # 2. Assess if we have enough information to write a comprehensive biography/report.
-    
-    # Format your response exactly like this:
-    # Findings: <your extracted facts here>
-    # Status: <COMPLETE or INCOMPLETE>
-    # """
     
     prompt = f"""
         You are a Senior Intelligence Analyst performing a Due Diligence investigation.
@@ -151,7 +127,7 @@ def analyze_findings(state: AgentState):
         
         return {
             "findings": [clean_findings], 
-            "is_complete": is_complete # <--- This updates the state
+            "is_complete": is_complete 
         }
         
     except Exception as e:
