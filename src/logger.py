@@ -4,51 +4,51 @@ import functools
 import os
 
 # --- 1. GLOBAL LOGGING SWITCHES ---
-# MASTER_LOGGING_ENABLED: If False, NO logs will appear anywhere.
 MASTER_LOGGING_ENABLED = True
-
-# DEFAULT_LEVEL: The standard level for all files (DEBUG shows everything, INFO shows less, ERROR shows only failures)
-# Levels: logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR
 DEFAULT_LEVEL = logging.DEBUG
 
 # --- 2. GRANULAR CONTROL ---
-# You can override the log level for specific files here.
-# Example: "src.tools": logging.ERROR (Only show errors for tools, hide timing/debug info)
 MODULE_CONFIG = {
-    "src.nodes": logging.DEBUG,   # Show everything for nodes
-    "src.tools": logging.INFO,    # Only show INFO and ERRORS for tools (hide debug data)
-    "src.graph": logging.WARNING  # Only show warnings/errors for the graph
+    "src.nodes": logging.DEBUG,   
+    "src.tools": logging.INFO,    
+    "src.graph": logging.WARNING  
 }
 
 def get_logger(name):
     """
-    Creates a logger for a specific file with the configured level.
+    Creates a logger that writes to BOTH the console and a file.
     """
     logger = logging.getLogger(name)
     
-    # If logging is globally disabled, set to CRITICAL+1 (silence everything)
+    # Global Kill Switch
     if not MASTER_LOGGING_ENABLED:
         logger.setLevel(logging.CRITICAL + 1)
         return logger
 
-    # Set specific level if defined in MODULE_CONFIG, else use default
+    # Set Level
     level = MODULE_CONFIG.get(name, DEFAULT_LEVEL)
     logger.setLevel(level)
     
-    # Create console handler if not exists
+    # Prevent adding duplicate handlers if get_logger is called twice
     if not logger.handlers:
-        handler = logging.StreamHandler()
-        # Format: [Time] [Level] [File] - Message
-        formatter = logging.Formatter('%(asctime)s [%(levelname)s] [%(name)s] - %(message)s', datefmt='%H:%M:%S')
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
+        # --- HANDLER 1: CONSOLE (Terminal) ---
+        c_handler = logging.StreamHandler()
+        c_format = logging.Formatter('%(asctime)s [%(levelname)s] [%(name)s] - %(message)s', datefmt='%H:%M:%S')
+        c_handler.setFormatter(c_format)
+        logger.addHandler(c_handler)
+
+        # --- HANDLER 2: FILE (agent.log) ---
+        # This creates 'agent.log' in your main folder
+        f_handler = logging.FileHandler('agent.log', mode='a', encoding='utf-8') 
+        f_format = logging.Formatter('%(asctime)s [%(levelname)s] [%(name)s] - %(message)s')
+        f_handler.setFormatter(f_format)
+        logger.addHandler(f_handler)
         
     return logger
 
 def log_execution_time(logger):
     """
     Decorator to log how long a function takes to run.
-    Usage: @log_execution_time(logger)
     """
     def decorator(func):
         @functools.wraps(func)
@@ -62,6 +62,6 @@ def log_execution_time(logger):
                 return result
             except Exception as e:
                 logger.error(f"❌ Error in {func.__name__}: {str(e)}", exc_info=True)
-                raise e # Re-raise to handle it in the main code
+                raise e 
         return wrapper
     return decorator
