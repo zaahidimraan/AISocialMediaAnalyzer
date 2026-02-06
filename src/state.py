@@ -11,3 +11,4 @@ class AgentState(TypedDict):
     latest_content: str # Stored the latest search results
     max_iterations: int      # Controls how many loops the agent runs
     max_search_results: int  # Controls how many links Tavily fetches
+    is_complete: bool  # True = Stop searching, False = Keep going

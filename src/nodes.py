@@ -58,23 +58,48 @@ def conduct_research(state: AgentState):
 @log_execution_time(logger)
 def analyze_findings(state: AgentState):
     logger.info("--- Analyzing Findings ---")
-    raw_content = state['latest_content']
+    raw_content = state.get('latest_content', "")
     
     if not raw_content:
-        logger.warning("No content found to analyze.")
-        return {"findings": []}
+        return {"findings": [], "is_complete": False}
 
+    # We update the prompt to ask for a status check
     prompt = f"""
-    Analyze the following text for target: {state['original_query']}
-    Text: {raw_content}
-    Extract high-value facts, risks, or connections.
+    You are a Research Analyst.
+    Target: {state['original_query']}
+    
+    Existing Findings:
+    {state.get('findings', [])}
+    
+    New Content to Analyze:
+    {raw_content}
+    
+    1. Extract new key high-value facts, risks, or connections from the "New Content".
+    2. Assess if we have enough information to write a comprehensive biography/report.
+    
+    Format your response exactly like this:
+    Findings: <your extracted facts here>
+    Status: <COMPLETE or INCOMPLETE>
     """
     
     try:
-        # response = llm.invoke([HumanMessage(content=prompt)])
-        response = AIMessage(content="Testing")
-        logger.debug(f"Analysis complete. Length: {len(response.content)} chars")
-        return {"findings": [response.content]}
+        response = llm.invoke([HumanMessage(content=prompt)])
+        content = response.content
+        
+        # Simple parsing logic
+        is_complete = "Status: COMPLETE" in content
+        
+        # Clean up the text (remove the status line for the final report)
+        clean_findings = content.replace("Status: COMPLETE", "").replace("Status: INCOMPLETE", "").strip()
+        
+        if is_complete:
+            logger.info("✅ Analyst decided sufficient information has been gathered.")
+        
+        return {
+            "findings": [clean_findings], 
+            "is_complete": is_complete 
+        }
+        
     except Exception as e:
-        logger.error("Error in analyze_findings", exc_info=True)
-        raise e
+        logger.error(f"Error in analyze_findings: {e}")
+        return {"findings": [], "is_complete": False}

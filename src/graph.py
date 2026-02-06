@@ -7,9 +7,16 @@ logger = get_logger("src.graph")
 
 
 def should_continue(state: AgentState):
+    # 1. Check if the Analyst said we are done
+    if state.get('is_complete'):
+        logger.info("Deciding: Stop (Analyst marked research as complete)")
+        return "end"
+
+    # 2. Check if we hit the hard limit
     if state['iteration'] < state['max_iterations']:
         logger.info(f"Deciding: Continue (Iteration {state['iteration']}/{state['max_iterations']})")
         return "continue"
+        
     logger.info("Deciding: Stop (Max iterations reached)")
     return "end"
 
