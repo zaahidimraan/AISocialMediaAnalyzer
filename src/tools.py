@@ -1,54 +1,54 @@
 import os
 from urllib.parse import urlparse
 from langchain_community.tools.tavily_search import TavilySearchResults
-from src.logger import get_logger, log_execution_time # <--- IMPORT
+from src.logger import get_logger, log_execution_time
 
-# Initialize Logger for this file
 logger = get_logger("src.tools")
 
-@log_execution_time(logger) # <--- Tracks time automatically
-def search_web(query: str, visited_domains: list) -> dict:
+@log_execution_time(logger)
+def search_web(query: str, visited_urls: list) -> dict:
     """
-    Searches the web using Tavily, excluding previously visited domains.
+    Searches using Tavily. Allows same domain but blocks exact visited URLs.
     """
-    # Log the input (Debug level)
-    logger.debug(f"Searching for: '{query}' | Excluded domains: {len(visited_domains)}")
+    logger.debug(f"Searching for: '{query}' | Visited URLs count: {len(visited_urls)}")
 
     if not os.getenv("TAVILY_API_KEY"):
-        logger.critical("TAVILY_API_KEY missing from environment!")
+        logger.critical("TAVILY_API_KEY missing!")
         raise ValueError("TAVILY_API_KEY is missing from .env file")
 
+    # 1. Initialize tool WITHOUT exclude_domains
+    # We want to see results from 'wikipedia.org' even if we've been there before,
+    # just not the *same page*.
     tool = TavilySearchResults(max_results=5)
 
     try:
-        results = tool.invoke({
-            "query": query, 
-            "exclude_domains": visited_domains
-        })
+        results = tool.invoke({"query": query})
         
         formatted_output = ""
-        new_domains = []
+        new_urls = []
         
+        # 2. Filter AFTER results come back
         for item in results:
             url = item['url']
             content = item['content']
-            parsed_domain = urlparse(url).netloc.replace("www.", "")
             
-            if parsed_domain not in visited_domains and parsed_domain not in new_domains:
-                formatted_output += f"Source: {parsed_domain}\nContent: {content}\n\n"
-                new_domains.append(parsed_domain)
+            # CRITICAL CHANGE: Check if this specific URL is in our history
+            if url not in visited_urls:
+                # Optional: Clean source name for the LLM (visual only)
+                parsed_domain = urlparse(url).netloc.replace("www.", "")
+                
+                formatted_output += f"Source: {parsed_domain}\nURL: {url}\nContent: {content}\n\n"
+                new_urls.append(url)
             else:
-                logger.debug(f"Skipping known source: {parsed_domain}")
+                logger.debug(f"Skipping known URL: {url}")
 
-        # Log success info
-        logger.info(f"Search found {len(new_domains)} new unique sources.")
+        logger.info(f"Search found {len(new_urls)} new unique URLs.")
         
         return {
             "content": formatted_output,
-            "new_domains": new_domains
+            "new_urls": new_urls
         }
 
     except Exception as e:
-        # The decorator handles the error logging, but we can add specific context if needed
         logger.error(f"Search failed: {e}")
-        return {"content": f"Error performing search: {str(e)}", "new_domains": []}
+        return {"content": f"Error: {str(e)}", "new_urls": []}

@@ -52,7 +52,7 @@ def conduct_research(state: AgentState):
     
     return {
         "latest_content": search_result["content"],
-        "visited_domains": search_result["new_domains"]
+        "visited_urls": search_result["new_urls"]
     }
 
 @log_execution_time(logger)
