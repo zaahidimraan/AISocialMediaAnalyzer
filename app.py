@@ -34,7 +34,7 @@ def index():
             # because it might take 10-20 seconds to finish.
             try:
                 result = graph_app.invoke(initial_state)
-                report = result.get('findings', [])
+                report = result.get('final_report', "")
             except Exception as e:
                 report = [f"Error occurred: {str(e)}"]
 

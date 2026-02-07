@@ -42,9 +42,8 @@
         {% if report %}
         <div class="report-section">
             <h2>Research Findings for: {{ target }}</h2>
-            {% for item in report %}
             <div class="finding-card">
-                {{ item }}
+                {{ report }}
             </div>
             {% endfor %}
         </div>

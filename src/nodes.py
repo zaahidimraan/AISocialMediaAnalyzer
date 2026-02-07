@@ -11,7 +11,8 @@ load_dotenv()
 logger = get_logger("src.nodes")
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3-flash-preview", 
+    # model="gemini-3-flash-preview",
+    model = "gemini-2.5-flash", 
     temperature=0,
     google_api_key=os.getenv("GOOGLE_API_KEY")
 )
@@ -32,12 +33,11 @@ def generate_strategy(state: AgentState):
                 1. Fill critical information gaps
                 2. Verify suspicious or inconsistent information
                 3. Uncover hidden connections or risks
-                4. Build upon previous discoveries
-                5. Use specific names, companies, dates, or identifiers when available
-                6. Combine multiple angles (e.g., "John Doe CFO Acme Corp 2015-2020")
-                7. Focus on verifiable, public information sources
-                8. Avoid redundant searches already covered
-                9. Prioritize high-value, non-obvious connections
+                4. Use specific names, companies, dates, or identifiers when available
+                5. Combine multiple angles (e.g., "John Doe CFO Acme Corp 2015-2020")
+                6. Focus on verifiable, public information sources
+                7. Avoid redundant searches already covered
+                8. Prioritize high-value, non-obvious connections
 
                 Return ONLY the search query as a single line of text. No explanation, no preamble.
                 """
@@ -105,16 +105,13 @@ def analyze_findings(state: AgentState):
         
         TASK A: EXTRACT NEW INTELLIGENCE
         Scan the "NEW SOURCE DATA" for high-value facts that are NOT in "ALREADY KNOWN".
-        - Focus on: Verifiable Identity, Career History, Financial Assets, Legal Issues, and adverse media.
-        - CRITICAL: If the text is irrelevant (ads, cookies, navigation), output "No new relevant information found."
+        - Focus on: Identity, Career History, Financial Assets, Legal Issues, and controversies.
         - CRITICAL: Do not summarize the article. Extract specific atomic facts (e.g., "Subject is Board Member of X Corp").
         
         TASK B: EVALUATE COMPLETENESS
-        Determine if we have enough to build a comprehensive profile.
-        
         Mark status as COMPLETE ONLY if we meet ALL criteria below:
-        1. Identity Verified (Full Name + Age/DOB or Nationality) and Primary Income Source Identified (Current Job or Business).
-        3. Risk Check Performed (actively looked for and noted any legal issues or controversies).
+        1. Identity (Full Name + Age/DOB or Nationality) and Primary Income Source Identified (Current Job or Business).
+        2. Looked for and noted any legal issues or controversies.
         
         If ANY of these are missing or vague, mark **INCOMPLETE**.
         
@@ -190,14 +187,12 @@ def extract_intelligence(state: AgentState):
         - [LEGAL]: Lawsuits, Case Numbers, Sanctions, Arrests.
         
         **SECTION 2: CONNECTION MAPPING (The Network Graph)**
-        Trace relationships between entities using "->" notation.
+        Trace relationships between entities.
         - Format: Entity A -> Relationship -> Entity B
-        - Example: "John Doe -> Founder of -> Tech Corp -> Acquired by -> MegaCorp"
-        - Example: "Jane Smith -> Business Partner of -> Robert Jones -> Sanctioned Entity"
         
         ### CONSTRAINTS
         1. PRECISION: Do not say "He is wealthy." Say "Net worth estimated at $50M by Forbes (2023)."
-        2. RAW ONLY: Do not validate, score, or judge these facts yet. That is the Validator's job.
+        2. RAW ONLY: Do not validate, score, or judge these facts yet. 
         3. NO DUPLICATES: If a fact is clearly in "EXISTING KNOWLEDGE", ignore it unless this source adds new details (like a specific date).
         
         Output strictly in the format above.
@@ -327,11 +322,12 @@ def write_report(state: AgentState):
     - Sources of Wealth.
     - Corporate Assets & Affiliations.
     
-    # 5. DATA RELIABILITY ASSESSMENT
-    - Comment on the confidence scores (e.g., "Most facts verified by multiple sources" or "Data relies on single unverified source").
+    # 5. LEGAL ISSUES & CONTROVERSIES
+    - Legal Cases, Sanctions, or Investigations
+    - Public Controversies or Reputational Risks
     
-    # 6. RECOMMENDATION
-    - [PROCEED] / [PROCEED WITH CAUTION] / [DO NOT PROCEED]
+    # 6. DATA RELIABILITY ASSESSMENT
+    - Comment on the confidence scores (e.g., "Most facts verified by multiple sources" or "Data relies on single unverified source").
     
     ### STYLE RULES
     - Use professional, objective language (no "I think").

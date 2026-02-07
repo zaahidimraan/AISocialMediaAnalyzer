@@ -13,3 +13,4 @@ class AgentState(TypedDict):
     max_search_results: int  # Controls how many links Tavily fetches
     is_complete: bool  # True = Stop searching, False = Keep going
     raw_extraction: str # Temporary field for Node A
+    final_report : str # Stored the final report
